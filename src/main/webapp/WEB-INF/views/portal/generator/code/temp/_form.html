@@ -1,0 +1,23 @@
+<form class="layui-form  layui-main-form " action="" lay-filter="mainform">
+    #set(curIndex=0)
+    #for(x:columnMetas)
+    #if(x.name!=primaryKey)
+    #if(curIndex%3==0)
+    <div class="layui-form-item" style="margin-top: 1%">
+        #end
+        #set(curIndex++)
+        <div class="layui-inline">
+            <label class="layui-form-label"><span
+                    class="lang">#(x.remarks)</span></label>
+            <div class="layui-input-inline">
+                <input type="text" name="#(x.attrName)" autocomplete="off"
+                       value="${obj.#(x.name)==null?'':obj.#(x.name)}" id="#(x.attrName)" class="layui-input">
+            </div>
+        </div>
+        #if(curIndex%3==0)
+    </div>
+    #end
+    #end
+    #end
+    </div>
+</form>

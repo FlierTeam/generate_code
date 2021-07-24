@@ -1,0 +1,264 @@
+#include("_layui.html")
+
+<!-- 默认主题 -->
+#define layout()
+#@layoutT(projectName)
+#end
+
+<!-- 添加引用页标题 -->
+#define layoutT(title)
+<!DOCTYPE html>
+<html>
+<head>
+<title>#(title??projectName)</title>
+<meta http-equiv="content-type" content="text/html; charset=UTF-8" />
+<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black" />
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="format-detection" content="telephone=no" />
+#@header()
+#@css?()
+</head>
+<body>
+	<div class="layui-container-fluid">
+		#@message()
+		#@main()
+	</div>
+	#@footer()
+	#@ddlSql()
+	#@js?()
+	#@layui()
+</body>
+</html>
+#end
+
+<!-- 引入css文件 -->
+#define header()
+	<link rel="icon" href="#(path)/favicon.ico" type="image/x-icon"/>
+	<link rel="stylesheet" href="#(path)/static/libs/layui/css/layui.css?t=#now()" media="all" />
+	<link rel="stylesheet" href="#(path)/static/css/global.css?t=#now()" media="all">
+	<link rel="stylesheet" href="#(path)/static/libs/font-awesome/css/font-awesome.min.css?t=#now()">
+	<link href="#(path)/static/libs/ddlsql/codemirror.min.css" rel="stylesheet">
+
+	<script src="#(path)/static/libs/jquery/jquery-2.1.4.min.js?t=#now()" type="text/javascript" ></script>
+	<script src="#(path)/static/libs/jquery/jquery.form.js?t=#now()" type="text/javascript" ></script>
+
+    <link rel="stylesheet" href="#(path)/static/css/theme/theme-default.css?t=#now()" media="all">
+    #if(theme??) <link rel="stylesheet" href="#(path)/static/css/theme/theme-#(theme).css?t=#now()" media="all" /> #end
+    <link rel="stylesheet" href="#(path)/static/css/layui_extend.css?t=#now()" media="all">
+
+#end
+
+<!-- 引入js文件 -->
+#define footer()
+	<script src="#(path)/static/libs/layui/layui.js?t=#now()" type="text/javascript" ></script>
+	<script src="#(path)/static/libs/common/alert.js?t=#now()" type="text/javascript" ></script>
+	<script src="#(path)/static/libs/common/common.js?t=#now()" type="text/javascript" ></script>
+	<script src="#(path)/static/libs/common/form-functions.js?t=#now()" type="text/javascript" ></script>
+	<script src="#(path)/static/libs/common/ui.tool.js?t=#now()" type="text/javascript" ></script>
+	<script src="#(path)/static/libs/common/grid-init.js?t=#now()" type="text/javascript" ></script>
+	<script src="#(path)/static/libs/ddlsql/codemirror.min.js?t=#now()" type="text/javascript"></script>
+	<script src="#(path)/static/libs/ddlsql/sql.min.js?t=#now()" type="text/javascript"></script>
+	<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/js-base64@3.6.0/base64.min.js"></script>
+#end
+
+<!-- 输出异常信息 -->
+#define message()
+  #if(e||msg)
+   <div id="showmsg" style=";margin:5px 0;background-color: #if(e) #FF5722 #else #009688 #end">
+	   <span style="color:#FFF;margin-left:10px">#(e.message??msg)</span>
+	   <i style="float: right" class="layui-icon layui-icon-close" onclick="closedMsg()"></i>
+   </div>
+   <script type="text/javascript">
+		function closedMsg(){
+			$("#showmsg").hide();
+		}
+		var msg="#(e.message??msg)";
+		if(msg.indexOf("成功")>0)
+		setTimeout("$('#closeWinBtn').click();",1000);
+     </script>
+  #end
+#end
+
+<!-- layui函数模块 -->
+#define layui()
+<script>
+	layui.use([ 'table', 'form', 'jquery','laydate','element'], function() {
+		var table = layui.table;
+		var form = layui.form;
+		var layer = layui.layer;
+		var $ = layui.$;
+		var laydate = layui.laydate;
+		var element = layui.element;
+		//执行一个laydate日期选择控件实例
+		lay('.layui-date').each(function(){
+			laydate.render({
+			    elem: this
+			    ,trigger:'click'
+			});
+		});
+
+		//执行一个laydate日期时间控件实例
+		lay('.layui-date-time').each(function(){
+			laydate.render({
+			    elem: this
+			    ,type:'datetime'
+			    ,trigger:'click'
+			});
+		});
+
+		//layui相关语法函数
+		#@layuiFunc?()
+
+		//表单提交监听
+		form.on('submit(saveForm)', function(data) {
+			$(this).ajaxSubmit({
+				type : 'post',
+				url : saveUrl,
+				success : function(data) {
+					if (data.state == 'ok') {
+						parent.success(data.msg);
+						$('#closeWinBtn').click();
+					} else {
+						warn(data.msg);
+						$('#submitBtn').attr("disabled",false);
+					}
+				}
+			});
+		 });
+
+		form.render();
+	});
+
+    //预览文件方法,url为file_uploaded表中的url字段
+	function previewFile(url,fileName){
+		var fileType=fileName.substring(fileName.lastIndexOf(".")+1).toLowerCase()
+		var protocol=window.location.protocol;
+		var host=window.location.host;
+		var port=window.location.port;
+		var location=protocol+"//"+host;
+		if(port!="")
+			location+=":"+port;
+		var fileUrl = location+'/portal/download/'+url+'?fullfilename='+fileName;
+		//文件在线预览服务地址
+        var onlinePreviewUrl='#(onlinePreviewUrl)?url='+encodeURIComponent(Base64.encode(fileUrl));
+        var onlinePreview=false;
+        if(!onlinePreview){
+        	onlinePreviewUrl='#(path)/portal/view/'+url;
+        }
+        openDialog(fileName,onlinePreviewUrl,false,null,null,null);
+	}
+	//附件删除
+	function deleteFile(url,fileName,num){
+		var url='#(path)/portal/delete/'+url;
+		layer.confirm('确定要删除 '+fileName+' 吗',{icon: 3, title:'提示'},function(index){
+			$.post(url,function(data){
+				if(data.state=='ok'){
+					$('#upload-'+num).addClass('layui-hide');
+				   layer.msg("删除成功",{icon:1});
+				}else{
+					layer.msg(data.msg||"附件不存在",{icon:2});
+				}
+			});
+		});
+	}
+	//附件下载
+	function downloadFile(url){
+		window.location.href='#(path)/portal/download/'+url;
+	}
+
+	//调取用户选择器,dataType:0单选，1多选
+	function getUser(inputId,dataType){
+    	sessionStorage.setItem('inputId',inputId);
+    	var userIds=$('#'+inputId).val();
+    	var url='#(path)/portal/core/sysOrg/getUser?userIds='+userIds+'&dataType='+dataType;
+    	openDialog('选择用户',url,false,840,460,null);
+    }
+
+    //确定按钮回调函数
+    function getUserData(userDataList,dataType){
+    	var resultValue=new Array();
+    	var resultTitle=new Array();
+    	$.each(userDataList,function(index,value){
+        		if(dataType=='0'&&index>0){
+					return
+            	}
+               resultValue.push(value.id);
+               resultTitle.push(value.user_name);
+        });
+
+        var inputId=sessionStorage.getItem('inputId');
+        $('#'+inputId).val(resultValue.join(','));
+        $('#'+inputId+'_name').val(resultTitle.join(','));
+
+        if(inputId!=null)
+        	sessionStorage.removeItem('inputId');
+    }
+</script>
+#end
+
+<!--table sql 文本域-->
+#define ddlSql()
+<script type="text/javascript">
+	var ddlSqlId=document.getElementById("ddlSql");
+	if(ddlSqlId){
+		/**
+	    * 初始化 table sql 3
+	    */
+	   var ddlSql = CodeMirror.fromTextArea(ddlSqlId, {
+	       lineNumbers: true,
+	       matchBrackets: true,
+	       mode: "text/x-sql",
+	       lineWrapping:false,
+	       readOnly:false,
+	       foldGutter: true,
+	       gutters:["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+	   });
+	   ddlSql.setSize('auto','auto');
+	}
+
+//	ddlSql.getValue();//取文本域值
+//	ddlSql.setValue(...);//给文本域赋值
+</script>
+#end
+
+<!-- 用户选择器 ：必填：req=true,禁用：disabled=true,赋值：value,保存用户名：saveUserName=true-->
+#define getUser(inputId,inputName,dataType)
+	<input type="text" id="#(inputId)_name" #if(saveUserName)name="#(inputName)Name"#end value="" style="padding-right: 30px;"
+		lay-verType='tips' #if(req==true)lay-verify="required" required #end readonly class="layui-input #if(disabled==true) layui-disabled #end" />
+    <i class="layui-icon layui-icon-user" style="position: absolute;top:10px;right:10px" #if(disabled!=true) onclick="getUser('#(inputId)',#(dataType))" #end></i>
+    <input type="hidden" id="#(inputId)" name="#(inputName)" value="#(value)" class="layui-input"/>
+	<script type="text/javascript">
+	    	var userIds='#(value)';
+			$.ajax({
+				url:'#(path)/portal/core/sysOrg/getUserListByUserIds'
+				,type:'POST'
+				,data:{
+					"userIds":userIds
+				}
+				,success:function(ret){
+					if(ret.state=='ok'){
+						var data=ret.data;
+						var resultValue=new Array();
+				    	var resultTitle=new Array();
+				    	var dataType='#(dataType)';
+				    	$.each(data,function(index,value){
+					    		//单选用户
+				        		if(dataType=='0'&&index>0){
+									return
+				            	}
+				               resultValue.push(value.id);
+				               resultTitle.push(value.user_name);
+				        });
+
+				        var inputId='#(inputId)';
+				        $('#'+inputId).val(resultValue.join(','));
+				        $('#'+inputId+'_name').val(resultTitle.join(','));
+					}
+				}
+			});
+	</script>
+#set(value='',req=false,disabled=false)
+#end
+

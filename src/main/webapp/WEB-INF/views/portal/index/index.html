@@ -1,0 +1,267 @@
+<!DOCTYPE html>
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+      xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity3"
+      xmlns:shiro="http://www.pollix.at/thymeleaf/shiro">
+
+<head>
+    <meta charset="utf-8">
+    <title>#(projectName)</title>
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport"
+          content="width=device-width, initial-scale=1, maximum-scale=1">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="format-detection" content="telephone=no">
+    #@header()
+    <script>
+        var navData = #(funcList);
+        var _path = "#(path)";
+        var topHeight = 101;
+
+    </script>
+</head>
+<body>
+<div class="layui-layout layui-layout-admin">
+    <div class="layui-header header header-demo">
+        <div class="layui-main">
+            <div class="admin-login-box">
+                <a class="logo">
+                    <span>#(projectName)</span>
+                </a>
+            </div>
+
+            <ul class="layui-nav admin-header-item">
+                <li class="layui-nav-item layui-hide-sm" id="moreMenu">#(vs.name??)<i
+                        class="layui-icon layui-icon-down"></i></li>
+                <li class="layui-nav-item" style="float:left">
+                    #for(data:topMenuList)
+                    #if(data.isWindowOpen==1)
+                    <a href="#(data.link_page==null?path+'/?menuId='+data.id:data.link_page)"
+                       class="tl #if(menuId==data.id) menu-this #end" target="_blank">
+                        #else
+                        <a href="#(path+'/?menuId='+data.id)" class="tl #if(menuId==data.id) menu-this #end">
+                            #end
+                            <i class="layui-icon #(data.icon)"></i>&nbsp;#(data.func_name)</a>
+                        #end
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:void(0);" id="lock" class="tl"><i class="fa fa-lock" aria-hidden="true"></i> 锁屏
+                        (Alt+L)</a>
+                    <a href="javascript:void(0);" class="admin-side-full-new tl"><i class="fa fa-arrows-alt"
+                                                                                    aria-hidden="true"></i> 全屏</a>
+                </li>
+                <li class="layui-nav-item">
+                    <a href="javascript:void(0);" id="themebtn"><i class="fa fa-th-large"></i>&nbsp;主题</a>
+                    <a href="javascript:void(0);" id="userInfor" class=" tl">#(vs.name??)</a>
+                </li>
+            </ul>
+
+        </div>
+    </div>
+
+    <div class="layui-side #if(menu.link_page) layui-hide #end" id="admin-side">
+        <div class="admin-side-toggle-new" style="height: 40px; text-align: center; line-height: 40px;" title="隐藏菜单">
+				<span id="menu_tip" style="margin-left:18px;float:left;font-size:16px">
+				<i class="layui-icon #(menu.icon)"
+                   style="font-size: 18px;"></i>&nbsp;&nbsp;&nbsp;#(menu.func_name)</span>
+            <i class="fa fa-bars" aria-hidden="true" style="color: #999; font-size: 18px; cursor: pointer;"></i>
+        </div>
+        <div class="layui-side-scroll" id="admin-navbar-side" lay-filter="side"></div>
+    </div>
+    <div class="layui-body" id="admin-body" #if(menu.link_page)style="left:0px;" #end>
+        <div class="layui-tab admin-nav-card layui-tab-brief" lay-filter="admin-tab">
+            <ul class="layui-tab-title #if(menu.link_page) layui-hide #end">
+            </ul>
+            <div class="layui-tab-content" style="min-height: 150px; padding: 0px 0 0 0;">
+                #if(menu.link_page)
+                <div class="layui-tab-item layui-show">
+                    <iframe src="#(menu.link_page)"></iframe>
+                </div>
+                #end
+            </div>
+        </div>
+    </div>
+
+    <div class="site-tree-mobile layui-hide-md">
+        <i class="layui-icon">&#xe602;</i>
+    </div>
+    <div class="site-mobile-shade"></div>
+
+
+    <div id="themePopup" class="layui-layer layui-layer-page layui-anim layui-anim-rl layui-layer-adminRight"
+         style="display:none;z-index: 19891019; width: 300px; top: 60px;left: initial;right: 0; ">
+        <div id="LAY_adminPopupTheme" class="layui-layer-content">
+            <div class="layui-card-header">主题方案</div>
+            <div class="layui-card-body layadmin-setTheme">
+                <div>
+                    <a href="javascript:themeswicth('')">
+                        <span class="layui-badge layui-bg-blue">默认</span>&nbsp;&nbsp;
+                    </a>
+                    <a href="javascript:themeswicth('blue')">
+                        <span class="layui-badge layui-bg-blue" style="background-color: #4381e6 !important">蓝</span>&nbsp;&nbsp;
+                    </a>
+                    <a href="javascript:themeswicth('green')">
+                        <span class="layui-badge layui-bg-green">绿</span>&nbsp;&nbsp;
+                    </a>
+                    <!--  <a href="javascript:themeswicth('cyan')">
+                         <span class="layui-badge layui-bg-cyan">青</span>&nbsp;&nbsp;
+                     </a>  -->
+                    <a href="javascript:themeswicth('black')">
+                        <span class="layui-badge layui-bg-black">黑</span>&nbsp;&nbsp;
+                    </a>
+                    <a href="javascript:themeswicth('purple')">
+                        <span class="layui-badge" style="background-color: #6575c7 !important">紫</span>&nbsp;&nbsp;
+                    </a>
+                    <a href="javascript:themeswicth('orange')">
+                        <span class="layui-badge layui-bg-orange">橙</span>&nbsp;&nbsp;
+                    </a>
+                    <a href="javascript:themeswicth('badge')">
+                        <span class="layui-badge layui-bg-dange">赤</span>&nbsp;&nbsp;
+                    </a>
+                </div>
+            </div>
+
+            <div class="layui-card-header">列表工具栏按钮</div>
+            <form class="layui-form" action="" style="padding: 5px 15px;">
+                <div class="layui-form-item">
+                    <input type="radio" name="sex" value="0" title="跟随主题颜色" checked="">
+                    <input type="radio" name="sex" value="1" title="默认白色">
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!--锁屏模板 start-->
+    <script type="text/template" id="lock-temp">
+        <div class="admin-header-lock" id="lock-box">
+            <div class="admin-header-lock-img">
+                <img src="#(path)/static/img/1.png"/>
+            </div>
+            <div class="admin-header-lock-name" id="lockUserName">管理员</div>
+            <input type="text" style="background-color: #4381e6; height: 38px;" class="admin-header-lock-input"
+                   value="输入密码解锁.." name="password" id="lockPwd"/>
+            <button style="background-color: #4381e6;" class="layui-btn layui-btn-small" id="unlock">解锁</button>
+        </div>
+    </script>
+    <!--锁屏模板 end -->
+
+    #@footer()
+    <script src="#(path)/static/libs/ext/index.js?t=#(version)" type="text/javascript"></script>
+    <script>
+        layui.use('layer', function () {
+            var $ = layui.jquery,
+                layer = layui.layer;
+
+            $('#userInfor').on('click', function () {
+                openDialog('个人信息', '#(path)/portal/core/sysUser/my?id=' + userId, false, 800, 500, null);
+            });
+            $('#passwd').on('click', function () {
+                openDialog('修改密码', '#(path)/portal/core/sysUser/myPassword?id=' + userId, false, 450, 300, null);
+            });
+
+            for (var i = 0; i < navData.length; i++) {
+                //打开一级菜单tab
+                if (navData[i].spread && navData[i].children.length == 0) {
+                    setTimeout("openTab('" + navData[i].title + "','" + navData[i].href + "')", 100);
+                } else {
+                    for (var j = 0; j < navData[i].children.length; j++) {
+                        //打开二级菜单tab
+                        if (navData[i].children[j].spread && navData[i].children[j].children.length == 0) {
+                            setTimeout("openTab('" + navData[i].children[j].title + "','" + navData[i].children[j].href + "')", 100);
+                        } else {
+                            for (var k = 0; k < navData[i].children[j].children.length; k++) {
+                                //打开三级菜单tab
+                                if (navData[i].children[j].children[k].spread) {
+                                    setTimeout("openTab('" + navData[i].children[j].children[k].title + "','" + navData[i].children[j].children[k].href + "')", 100);
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        //添加选项卡
+        function openTab(title, url) {
+            tab.tabAdd({
+                href: url,
+                icon: '',
+                title: title
+            });
+        }
+
+        //删除当前页选项卡
+        function deleteTab() {
+            var id = tab.getCurrentTabId();
+            tab.deleteTab(id);
+        }
+
+        //主题显示
+        $('#themebtn').on({
+            click: function () {
+                if ($("#themePopup").is(":hidden")) {
+                    $("#themePopup").show(200);
+                } else {
+                    $("#themePopup").hide(200);
+                }
+            }
+        });
+
+        layui.dropdown.render({
+            elem: '#moreMenu'
+            , data: [#for(data
+        :
+        topMenuList
+        )
+        {
+            title: '#(data.func_name??)'
+                , id
+        :
+            '#(data.id)'
+                , href
+        :
+            "#(path+'/?menuId='+data.id)"
+        }
+        ,
+        #end
+        {
+            title: '修改密码'
+                , id
+        :
+            'passwd'
+        }
+        ,
+        {
+            title: '注销'
+                , id
+        :
+            'logout'
+                , href
+        :
+            '#(path)/logout'
+        }
+        ]
+        ,
+        click: function (data, othis) {
+            var id = data.id;
+            if (id == 'passwd') {
+                openDialog('修改密码', '#(path)/portal/core/sysUser/myPassword?id=' + userId, false, 450, 200, null);
+            }
+        }
+        })
+        ;
+
+        $("#admin-navbar-side .layui-nav-item").each(function () {
+            console.log($(this).html());
+            if ($(this).innerText == "通用代码生成器") {
+                $(this).addClass("layui-this");
+            }
+        });
+    </script>
+</div>
+</body>
+
+</html>

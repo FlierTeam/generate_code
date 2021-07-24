@@ -1,0 +1,266 @@
+#@layoutT("代码生成器")
+#define css()
+<style type="text/css">
+    form .task-row:nth-child(3) {
+        margin: 10px 0;
+    }
+
+    form .task-row:nth-child(4) button, form .task-row:nth-child(5) button {
+        margin: 0 0 10px 10px;
+    }
+
+    .tptree-cls {
+        position: absolute;
+        left: 0;
+        top: 0;
+        width: 20%;
+        height: 100%;
+    }
+
+    .gen {
+        position: absolute;
+        right: 0;
+        width: 79%;
+        border: #409EFF 1px outset;
+        height: 100%;
+    }
+
+    .selectDom {
+        color: #006BF9;
+        font-weight: bold;
+    }
+
+    .noSelect {
+        color: #555;
+        font-weight: normal;
+    }
+</style>
+
+#end
+#define main()
+<div class="layui-row layui-col-space1 task-row">
+
+    #@colStart("父级目录",4)
+    <input type="text" class="layui-input" name="rootPath" value=""/>
+    #@colEnd()
+
+    #@colStart("文件名",4)
+    <input type="text" class="layui-input" name="fileName" value=""/>
+    #@colEnd()
+
+    #@colStart("",4)
+    #if(type!=1)
+    <button class="layui-btn  layui-btn-normal" id="add">新增</button>
+    #end
+    <button class="layui-btn  layui-btn-normal" id="edit">修改</button>
+    #if(type!=1)
+    <button class="layui-btn  layui-btn-normal" id="delete">删除</button>
+    #end
+    #@colEnd()
+</div>
+
+<br>
+<div id="template" style="position: relative">
+    <div id="tptree" lay-filter="tptree" class="layui-tree tptree-cls"></div>
+    <div class="layui-row layui-col-space1 task-row  gen">
+        <textarea id="fileContents" class="layui-textarea" style="display: none;"></textarea>
+    </div>
+</div>
+#end
+#define js()
+<script>
+
+    /**
+     * 模板页面
+     */
+    $(function () {
+        let tptree = "";
+        let fileContents;
+        fileContents = CodeMirror.fromTextArea(document.getElementById("fileContents"), {
+            lineNumbers: true,
+            matchBrackets: true,
+            mode: "text/x-sql",
+            lineWrapping: true,
+            readOnly: false,
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+        });
+        fileContents.setSize('auto', 'auto');
+        cleardata();
+        queryTreeList();
+        var treeData = {};
+
+        function queryTreeList() {
+            $.ajax({
+                type: 'GET',
+                url: "#(path)/generator/code/queryTemplates",
+                data: {
+                    "type": #(type),
+                },
+                dataType: "json",
+                success: function (data) {
+                    if (data.msg == "获取成功") {
+                        initTreeNode(data);
+                        treeData = data.list[0];
+                    }
+                }
+            });
+        }
+
+        function initTreeNode(data) {
+            tptree = layui.tree.render({
+                elem: '#tptree',
+                id: 'treeId',
+                data: data.list,
+                onlyIconControl: true,
+                click: function (obj) {
+                    console.log(obj.data)
+                    $("input[name=fileName]").val(obj.data.title);
+                    $("input[name=rootPath]").val(obj.data.pid);
+                    //节点高亮
+                    const nodes = document.getElementsByClassName("layui-tree-txt");
+                    for (let i = 0; i < nodes.length; i++) {
+                        if (nodes[i].innerHTML === obj.data.title) {
+                            $(nodes[i]).addClass("selectDom");
+                            $(nodes[i]).removeClass("noSelect");
+                        } else {
+                            $(nodes[i]).removeClass("selectDom");
+                            $(nodes[i]).addClass("noSelect");
+                        }
+                    }
+                    $.ajax({
+                        type: 'POST',
+                        url: "#(path)/generator/code/getTemplatesContents",
+                        data: {
+                            "title": obj.data.title.substring(0, obj.data.title.indexOf(".")),
+                            "id": obj.data.id,
+                        },
+                        dataType: "json",
+                        success: function (data) {
+                            filldata(data.list[0].data);
+                        }
+                    });
+                },
+            });
+        }
+
+        function filldata(data) {
+            fileContents.setValue(data);
+            fileContents.setSize('auto', 'auto');
+        }
+
+        function cleardata() {
+            fileContents.setValue("");
+        }
+
+        /**
+         * 新增模板文件
+         */
+        $('#add').click(function () {
+            var constr = fileContents.getValue().toString();
+            var fn = constr.substring(constr.indexOf('sql("') + 5, constr.indexOf('")')).trim() + ".sql";
+            var filem = $("input[name=fileName]").val().indexOf(".sql") != -1 ? $("input[name=fileName]").val() : $("input[name=fileName]").val() + ".sql";
+            if ($("input[name=fileName]").val() == "") {
+                warn("请输入新增文件名称");
+                return;
+            }
+            if (fileContents.getValue() == null || fileContents.getValue() == "") {
+                warn("模板文件内容为空");
+                return;
+            }
+            if (fileContents.getValue().indexOf("${") == -1 || fileContents.getValue().indexOf("}") == -1) {
+                warn("模板内容存在错误");
+                return;
+            }
+            for (var i = 0; i < treeData.children.length; i++) {
+                if (fn == treeData.children[i].title || filem == treeData.children[i].title) {
+                    error("模板文件名【" + treeData.children[i].title + "】已存在，请重新命名！");
+                    return false;
+                }
+            }
+
+            $.ajax({
+                type: 'POST',
+                url: "#(path)/generator/code/createTemplate",
+                data: {
+                    "fileName": $("input[name=fileName]").val(),
+                    "rootPath": $("input[name=rootPath]").val(),
+                    "fileContents": fileContents.getValue(),
+                },
+                dataType: "json",
+                success: function (data) {
+                    if (data.state == "ok") {
+                        success(data.msg || "新增成功");
+                    } else {
+                        error(data.msg || '代码生成失败');
+                    }
+                    cleardata();
+                    queryTreeList();
+                }
+            });
+        });
+
+        /**
+         * 修改模板文件
+         */
+        $('#edit').click(function () {
+            if ($("input[name=fileName]").val() == "") {
+                warn("请输入新增文件名称");
+                return;
+            }
+            if (fileContents.getValue() == null || fileContents.getValue() == "") {
+                warn("模板文件内容为空");
+                return;
+            }
+            $.ajax({
+                type: 'POST',
+                url: "#(path)/generator/code/updateTemplate",
+                data: {
+                    "fileName": $("input[name=fileName]").val(),
+                    "rootPath": $("input[name=rootPath]").val(),
+                    "fileContents": fileContents.getValue(),
+                },
+                dataType: "json",
+                success: function (data) {
+                    console.log(data)
+                    if (data.state == "ok") {
+                        success(data.msg || "修改成功");
+                    } else {
+                        error(data.msg || '修改失败');
+                    }
+                    cleardata();
+                }
+            });
+        });
+
+        /**
+         * 删除模板文件
+         */
+        $('#delete').click(function () {
+            if ($("input[name=fileName]").val() == "") {
+                warn("请输入新增文件名称");
+                return;
+            }
+            $.ajax({
+                type: 'POST',
+                url: "#(path)/generator/code/deleteTemplate",
+                data: {
+                    "fileName": $("input[name=fileName]").val(),
+                    "rootPath": $("input[name=rootPath]").val(),
+                },
+                dataType: "json",
+                success: function (data) {
+                    if (data.state == "ok") {
+                        success(data.msg || "删除成功");
+                    } else {
+                        error(data.msg || '删除失败');
+                    }
+                    cleardata();
+                    queryTreeList();
+                }
+            });
+        });
+
+    });
+</script>
+#end

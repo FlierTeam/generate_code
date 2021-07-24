@@ -1,0 +1,9 @@
+# 配置 undertow
+undertow.devMode=true
+undertow.host=0.0.0.0
+undertow.port=8088
+
+#文件在线预览服务：true-开启，false-关闭,true需要另外启动文件服务器，详情请看项目中的./doc/jfinal-layui启动必读.txt
+onlinePreview=false
+#文件在线服务地址
+onlinePreviewUrl=http://localhost:8012/onlinePreview

@@ -1,0 +1,382 @@
+#@layoutT("代码生成器")
+#define css()
+<style type="text/css">
+    .layui-btn-primary {
+        color: #f0ffff;
+        border: 0px;
+    }
+
+    .layui-btn-primary:hover {
+        color: #fff;
+        border-color: #1e9fff;
+        background: #1e9fff;
+    }
+
+    .end {
+        cursor: pointer;
+        color: #fff;
+        background: #1e9fff;
+    }
+
+    form .task-row:nth-child(3) {
+        margin: 10px 0;
+    }
+
+    form .task-row:nth-child(4) button, form .task-row:nth-child(5) button {
+        margin: 0 0 10px 10px;
+    }
+</style>
+
+#end
+#define main()
+<div class="container-wrap">
+    <form action="javascript:void(0)" class="layui-form layui-form-pane f-form" method="post">
+        <div class="layui-row layui-col-space1 task-row">
+            #@colStart("数据库表",3)
+            <input type="text" class="layui-input" name="tableName" readonly="readonly" placeholder="请选择数据库表"/>
+            #@colEnd()
+            #@colStart("备注信息",3)
+            <input type="text" class="layui-input" name="tableComment" readonly="readonly"/>
+            #@colEnd()
+
+            #@colStart("作者名称",6)
+            <input type="text" class="layui-input" name="authorName" value="admin"/>
+            #@colEnd()
+        </div>
+        <div class="layui-row layui-col-space1 task-row">
+            #@colStart("实体名称",6)
+            <input type="text" class="layui-input" name="modelName" value=""/>
+            #@colEnd()
+            #@colStart("package",6)
+            <input type="text" class="layui-input" name="packageName" value="com.gen.model"/>
+            #@colEnd()
+        </div>
+        <div class="layui-row layui-col-space1 task-row">
+            #@colStart("数据库类型",6)
+            <select id="jdbcname" name="jdbcname" lay-filter="jdbcname" lay-verify="required">
+                <option value=""></option>
+                <option value="mysql" selected>mysql</option>
+                <option value="oracle">oracle</option>
+            </select>
+            <input type="text" class="layui-input" style="display: none" name="jdbcType" value="mysql"/>
+            #@colEnd()
+            #@colStart("URL",6)
+            <input type="text" class="layui-input" name="url"
+                   value="jdbc:mysql://121.196.209.163/ibase4j?characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull"/>
+            #@colEnd()
+        </div>
+        <div class="layui-row layui-col-space1 task-row">
+            #@colStart("用户名",6)
+            <input type="text" class="layui-input" name="user" value="root"/>
+            #@colEnd()
+            #@colStart("密码",6)
+            <input type="text" class="layui-input" name="pwd" value="123456"/>
+            #@colEnd()
+        </div>
+
+        <div class="layui-row layui-col-space1 task-row">
+            #@colStart("文件生成路径",12)
+            <input type="text" class="layui-input" name="filePath" value=""/>
+            #@colEnd()
+        </div>
+        <br>
+
+        <div class="layui-row layui-col-space12 task-row" style="text-align: center">
+            <button class="layui-btn  layui-btn-normal" id="changeSource">更换数据库源 »</button>
+            <button class="layui-btn  layui-btn-normal" id="btnGenCodeTemplate">模板管理 »</button>
+            <button class="layui-btn  layui-btn-normal" id="btnGenCode">生成代码 »</button>
+            <button class="layui-btn  layui-btn-normal" id="downloadAll" disabled="disabled">下载代码</button>
+        </div>
+        <br>
+        <br>
+
+        <div class="layui-row layui-col-space task-row">
+            #@colStart("后端代码",12)
+            <div id="btnGroupJava">
+                <button class="btn layui-btn layui-btn-primary" id="Controller.java" onclick="chilckBtn(this)">
+                    Controller.java
+                </button>
+                <button class="btn layui-btn layui-btn-primary" id="Service.java" onclick="chilckBtn(this)">
+                    Service.java
+                </button>
+                <button class="btn layui-btn layui-btn-primary" id="Model.java" onclick="chilckBtn(this)">Model.java
+                </button>
+                <button class="btn layui-btn layui-btn-primary" id="BaseModel.java" onclick="chilckBtn(this)">
+                    BaseModel.java
+                </button>
+            </div>
+            #@colEnd()
+        </div>
+        <br>
+        <div class="layui-row layui-col-space1 task-row">
+            #@colStart("前端代码",12)
+            <div id="btnGroupHtml">
+                <button class="btn layui-btn layui-btn-primary" id="index.html" onclick="chilckBtn(this)">index.html
+                </button>
+                <button class="btn layui-btn layui-btn-primary" id="add.html" onclick="chilckBtn(this)">add.html
+                </button>
+                <button class="btn layui-btn layui-btn-primary" id="edit.html" onclick="chilckBtn(this)">edit.html
+                </button>
+                <button class="btn layui-btn layui-btn-primary" id="_form.html" onclick="chilckBtn(this)">_form.html
+                </button>
+            </div>
+            #@colEnd()
+        </div>
+        <div class="layui-row layui-col-space1 task-row">
+            <textarea id="genCodeArea" class="layui-textarea" style="display: none;"></textarea>
+        </div>
+    </form>
+</div>
+
+#end
+#define js()
+<script>
+    //单击事件
+    function chilckBtn(dom) {
+        var collection = $(".layui-btn-primary");
+        $.each(collection, function () {
+            $(this).removeClass("end");
+        });
+        $(dom).addClass("end");
+    }
+
+    var index = 0;
+    $('input[name=tableName]').click(function () {
+        index = openDialog('选择数据库表', '#(path)/generator/code/tables', false, '50%', null, null);
+    });
+
+    var temp = 0;
+    //模板页面
+    $('#btnGenCodeTemplate').click(function () {
+        temp = openDialog('编辑模板', '#(path)/generator/code/templateCodeHtml?type=3', true, '100%', '100%', null);
+    });
+
+    layui.form.on('select(jdbcname)', function (data) {
+        var value = data.value;  //select选中的值
+        $('input[name=jdbcType]').val(value);
+    });
+
+    function getTable(data) {
+        var tables = "";
+        var modelNames = "";
+        var tableComment="";
+        for (var i = 0; i < data.length; i++) {
+            if (tables != "") {
+                tables += ",";
+                modelNames += ",";
+                tableComment+=",";
+            }
+            tables += data[i].name;
+            modelNames += data[i].modelName;
+            tableComment+=data[i].remarks
+        }
+        $('input[name=tableName]').val(tables);
+        $('input[name=tableComment]').val(tableComment);
+        $('input[name=modelName]').val(modelNames);
+        layer.close(index);
+    }
+
+    $(function () {
+        var genCodeArea = CodeMirror.fromTextArea(document.getElementById("genCodeArea"), {
+            lineNumbers: true,
+            matchBrackets: true,
+            mode: "text/x-sql",
+            lineWrapping: true,
+            readOnly: false,
+            foldGutter: true,
+            gutters: ["CodeMirror-linenumbers", "CodeMirror-foldgutter"]
+        });
+        genCodeArea.setSize('auto', 'auto');
+
+        var codeData;
+
+        /**
+         * changeSource
+         * 更换数据源
+         * */
+        $('#changeSource').click(function () {
+            var url = $('input[name=url]').val();
+            var user = $('input[name=user]').val();
+            var pwd = $('input[name=pwd]').val();
+            var jdbcType = $('input[name=pwd]').val();
+            if (user == "" && url == "" && pwd == "" && jdbcType == "") {
+                warn("请输入完整配置");
+                return;
+            }
+            ;
+            var loading = layer.load(0, {
+                shade: [0.4, '#393D49'],
+                time: 1 * 1000
+            });
+            $.ajax({
+                type: 'POST',
+                url: "#(path)/generator/code/changeSource",
+                data: {
+                    "url": $("input[name=url]").val(),
+                    "user": $("input[name=user]").val(),
+                    "pwd": $("input[name=pwd]").val(),
+                    "jdbcType": $("input[name=jdbcType]").val(),
+                },
+                dataType: "json",
+                success: function (data) {
+                    if (data.state == "ok") {
+                        setTimeout(function () {
+                            success("更换数据源成功");
+                        }, 1000);
+                    } else {
+                        error(data.msg || '更换数据源失败');
+                    }
+                    $('input[name=tableName]').val("");
+                    $('input[name=tableComment]').val("");
+                    $('input[name=modelName]').val("");
+                }
+            });
+        });
+
+        /**
+         * 生成代码
+         */
+        $('#btnGenCode').click(function () {
+            var loading = layer.load(0, {
+                shade: [0.4, '#393D49'],
+                time: 1 * 1000
+            });
+            if ($("input[name=tableName]").val() == "") {
+                warn("请选择数据库表");
+                return;
+            }
+            var url = $('input[name=url]').val();
+            var user = $('input[name=user]').val();
+            var pwd = $('input[name=pwd]').val();
+            if (user == "" && url == "" && pwd == "") {
+                warn("请输入完整配置");
+                return;
+            }
+            ;
+            $.ajax({
+                type: 'POST',
+                url: "#(path)/generator/code/createCode",
+                data: {
+                    "name": $("input[name=tableName]").val(),
+                    "tableComment": $("input[name=tableComment]").val(),
+                    "modelName": $("input[name=modelName]").val(),
+                    "authorName": $("input[name=authorName]").val(),
+                    "packageName": $("input[name=packageName]").val(),
+                    "url": $("input[name=url]").val(),
+                    "user": $("input[name=user]").val(),
+                    "pwd": $("input[name=pwd]").val(),
+                    "jdbcType": $("input[name=jdbcType]").val(),
+                    "type": 3
+                },
+                dataType: "json",
+                success: function (data) {
+                    if (data.state == "ok") {
+                        setTimeout(function () {
+                            success("代码生成成功");
+                        }, 1000);
+                        codeData = data.data[0];
+                        var codeJava = codeData["codejava"] || [];
+                        var codeHtml = codeData["codehtml"] || [];
+                        var btn1 = "", btn2 = "", checkbox1 = "", checkbox2 = "";
+
+                        codeJava.forEach(v => {
+                            btn1 += '<button  class="btn layui-btn layui-btn-primary " onclick="chilckBtn(this);" id="' + v + '" >' + v + '</button>';
+                            checkbox1 += '<input lay-filter="code" type="checkbox" name="javaCode" onclick="chilckBtn(this);" id="' + v + '" value="' + v + '" title="' + v + '" />';
+                        });
+                        codeHtml.forEach(v => {
+                            btn2 += '<button  class="btn layui-btn layui-btn-primary" onclick="chilckBtn(this);" id="' + v + '" >' + v + '</button>';
+                            checkbox2 += '<input lay-filter="code" type="checkbox" name="htmlCode" onclick="chilckBtn(this);" id="' + v + '" value="' + v + '" title="' + v + '" />';
+                        });
+
+                        if (btn1 != "") {
+                            checkbox1 += '<button class="btn layui-btn layui-btn-primary" onclick="download(\'codeJava\')">下载</button>';
+                        }
+                        if (btn2 != "") {
+                            checkbox2 += '<button class="btn layui-btn layui-btn-primary" onclick="download(\'codeHtml\')">下载</button>';
+                        }
+
+                        $("#btnGroupJava").html(checkbox1);
+                        $("#btnGroupHtml").html(checkbox2);
+                        layui.form.render();
+                        layui.form.on('checkbox(code)', function (data) {
+                            if (!$.isEmptyObject(codeData)) {
+                                var strCode = codeData[data.value];
+                                if (strCode == null) {
+                                    strCode = codeData[data.value.toLocaleLowerCase()];
+                                }
+                                genCodeArea.setValue(strCode);
+                                genCodeArea.setSize('auto', 'auto');
+                            }
+                        });
+
+                        $('#downloadAll').removeClass('layui-disabled');
+                        $('#downloadAll').attr("disabled", false);
+
+                        var strCode = codeData[codeJava[0]];
+                        if (strCode == null) {
+                            strCode = codeData[codeJava[0].toLocaleLowerCase()];
+                        }
+                        genCodeArea.setValue(strCode);
+                        genCodeArea.setSize('auto', 'auto');
+                    } else {
+                        $("#btnGroupJava").html("");
+                        $("#btnGroupHtml").html("");
+                        genCodeArea.setValue("");
+                        genCodeArea.setSize('auto', 'auto');
+                        error(data.msg || '代码生成失败');
+                    }
+                }
+            });
+        });
+    });
+
+    $('#downloadAll').click(function () {
+        download("codeAll");
+    });
+
+    function download(type) {
+        var text = "所有";
+        var codeName = [];
+        if (type == "codeHtml") {
+            $('input[type=checkbox][name=htmlCode]:checked').each(function () {
+                codeName.push($(this).val());
+            });
+            text = codeName.toString();
+        } else if (type == 'codeJava') {
+            $('input[type=checkbox][name=javaCode]:checked').each(function () {
+                codeName.push($(this).val());
+            });
+            text = codeName.toString();
+        } else {
+            codeName = ["all"];
+        }
+
+        if (type != 'codeAll' && codeName.length == 0) {
+            error("请选择要下载的文件")
+            return
+        }
+
+        jsConfirm("若已存在文件将被覆盖,确定创建" + text + "文件吗？", function () {
+            $.ajax({
+                url: "#(path)/generator/code/download",
+                type: "get",
+                data: {
+                    "type": type,
+                    "filePath": $('input[name=filePath]').val(),
+                    "codeName": codeName.toString()
+                },
+                success: function (ret) {
+
+                    if (ret.state == 'ok') {
+                        window.location.href="#(path)/generator/code/downloadFile";
+                    } else {
+                        error("代码文件创建失败")
+                    }
+                }
+            });
+
+        });
+
+    }
+</script>
+#end
