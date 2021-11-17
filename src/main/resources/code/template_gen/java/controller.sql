@@ -3,11 +3,11 @@
 #[[
 package ${controllerPackage};
 
-import com.ywj.gen.base.BaseController;
-import com.ywj.gen.common.IdKit;
-import com.ywj.gen.common.sql.Like;
-import com.ywj.gen.common.sql.OrderBy;
-import com.ywj.gen.model.${modelName};
+import com.lx.gen.base.BaseController;
+import com.lx.gen.common.IdKit;
+import com.lx.gen.common.sql.Like;
+import com.lx.gen.common.sql.OrderBy;
+import com.lx.gen.model.${modelName};
 import ${servicePackage};
 import com.jfinal.aop.Inject;
 import com.jfinal.core.Path;

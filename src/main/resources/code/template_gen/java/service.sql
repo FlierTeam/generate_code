@@ -3,8 +3,8 @@
 #[[
 package ${servicePackage};
 
-import com.ywj.gen.base.BaseService;
-import com.ywj.gen.model.${modelName};
+import com.lx.gen.base.BaseService;
+import com.lx.gen.model.${modelName};
 import com.jfinal.plugin.activerecord.Page;
 
 import java.util.List;
