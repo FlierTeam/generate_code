@@ -1,6 +1,6 @@
 #主要配置
 dbType=mysql
-jdbcUrl=jdbc:mysql://127.0.0.1/ibase4j?characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull
+jdbcUrl=jdbc:mysql://127.0.0.1/world?characterEncoding=utf8&useSSL=false&zeroDateTimeBehavior=convertToNull
 user=root
 password=123456
 

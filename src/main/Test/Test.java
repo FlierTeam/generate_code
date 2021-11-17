@@ -1,6 +1,3 @@
-package Test;
-
-
 public class Test {
 
 	public static String checkSuffix(String fileName) {
